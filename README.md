@@ -1,2 +1,2 @@
 
-# Kiwi Bundle - Visual Studio Code
+# Kiwi Bundle - Visual Studio Code Runtime
