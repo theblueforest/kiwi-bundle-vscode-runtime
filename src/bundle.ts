@@ -1,5 +1,5 @@
 import * as vscode from "vscode"
-import { VSCodeTreeParams, VSCodeTreeDataProvider } from "./TreeDataProvider"
+import { VSCodeTreeParams, VSCodeTreeDataProvider } from "./trees/TreeDataProvider"
 
 interface Params {
   trees?: { [treeId: string]: VSCodeTreeParams }
