@@ -1,21 +1,20 @@
-import { i18nSettings, i18nData } from "dropin-recipes"
+import { i18nSettings } from "dropin-recipes"
 import * as vscode from "vscode"
-import { VSCodeTreeParams, VSCodeTreeDataProvider } from "./trees/DataProvider"
+import { VSCodeTreeParams, VSCodeTreeProvider } from "./trees/Provider"
 
-export interface KiwiBundleVSCodeContext {
+export interface KiwiBundleVSCodeParams {
   trees?: { [treeId: string]: VSCodeTreeParams }
-  i18n?: { [name: string]: i18nData }
 }
 
-export const KiwiBundleVSCode = (context: KiwiBundleVSCodeContext) => {
+export const KiwiBundleVSCode = (params: KiwiBundleVSCodeParams) => {
   // Locale
   i18nSettings.setCurrentLanguageFromString(vscode.env.language)
 
   // Trees
-  if(typeof context.trees !== "undefined") {
-    const trees = context.trees
+  if(typeof params.trees !== "undefined") {
+    const trees = params.trees
     Object.keys(trees).forEach(treeId => {
-      vscode.window.registerTreeDataProvider(treeId, new VSCodeTreeDataProvider(trees[treeId], context.i18n?.[treeId]))
+      vscode.window.registerTreeDataProvider(treeId, new VSCodeTreeProvider(trees[treeId]))
     })
   }
 }
