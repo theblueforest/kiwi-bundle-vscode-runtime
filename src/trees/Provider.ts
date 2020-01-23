@@ -4,15 +4,14 @@ import { VSCodeTreeItem } from "./Item"
 
 export type VSCodeTreeData = XOR<{
   label: NameField_i18n
+  description?: string
 }, {
   $: { type: "handler", name: string }
 }>
 
 export type VSCodeTreeRecipe = TreeObject<VSCodeTreeData>[]
 
-export type VSCodeTreeHandlers = {
-  [functionName: string]: any
-}
+export type VSCodeTreeHandlers = { [functionName: string]: any }
 
 export interface VSCodeTreeParams {
   recipe: VSCodeTreeRecipe
@@ -23,45 +22,58 @@ export interface VSCodeTreeParams {
 export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeItem> {
   constructor(private params: VSCodeTreeParams) {}
 
-  private generateItems(id: string, data: VSCodeTreeData, children?: VSCodeTreeRecipe): VSCodeTreeItem[] {
+  private extractItemChildren(children?: TreeObject<VSCodeTreeData>["children"], index?: number): VSCodeTreeRecipe {
+    if(!Array.isArray(children)) {
+      const list: VSCodeTreeRecipe = []
+      if(typeof index !== "undefined") {
+        list.push({
+          id: (children?.id as string[])[index],
+          data: (children?.data as VSCodeTreeData[])[index],
+          children: children?.children,
+        })
+      }
+      return list
+    }
+    return children as VSCodeTreeRecipe
+  }
+
+  private generateItems(id: string, data: VSCodeTreeData, children?: TreeObject<VSCodeTreeData>["children"], index?: number): VSCodeTreeItem[] {
     if(typeof data.$ !== "undefined") {
       if(typeof this.params.handlers !== "undefined" && typeof this.params.handlers[data.$.name] !== "undefined") {
-        return this.params.handlers[data.$.name]().map((element: any, index: number) => {
-          return new VSCodeTreeItem(`${id}-${index}`, element.label, children)
+        const name = data.$.name
+        return this.params.handlers[name]().map((element: VSCodeTreeData) => {
+          return new VSCodeTreeItem(`${id}-${name}`, {
+            label: element.label as string,
+            description: element.description,
+          }, this.extractItemChildren(children, index))
         })
       }
     } else if(typeof data.label === "object" && typeof this.params.i18n !== "undefined") {
       const element = (data.label as i18nQuery).$
       return [
-        new VSCodeTreeItem(id, i18n(this.params.i18n[element.name as string] as i18nContent, element.options), children)
+        new VSCodeTreeItem(id, {
+          label: i18n(this.params.i18n[element.name as string] as i18nContent, element.options),
+        }, this.extractItemChildren(children, index))
       ]
     }
     return [
-      new VSCodeTreeItem(id, i18n(data.label as i18nContent), children)
+      new VSCodeTreeItem(id, {
+        label: i18n(data.label as i18nContent),
+      }, this.extractItemChildren(children, index))
     ]
   }
 
   private getItems(recipe: VSCodeTreeRecipe): Promise<VSCodeTreeItem[]> {
     if(!Array.isArray(recipe)) return Promise.reject("Tree must be an array")
     return recipe.reduce<Promise<VSCodeTreeItem[]>>((promise, current) => {
-      if(typeof current.id === "undefined") {
-        return Promise.reject("Id is missing")
-      }
-
-      if(typeof current.data === "undefined") {
-        return Promise.reject("Data is missing")
-      }
-
+      if(typeof current.id === "undefined") return Promise.reject("Id is missing")
+      if(typeof current.data === "undefined") return Promise.reject("Data is missing")
       return promise.then(list => {
         if(Array.isArray(current.id)) {
-          if(!Array.isArray(current.data)) {
-            return Promise.reject("Id must be a string or data an array")
-          }
-          if(current.id.length !== current.data.length) {
-            return Promise.reject("Lengths are different on id and data")
-          }
+          if(!Array.isArray(current.data)) return Promise.reject("Id must be a string or data an array")
+          if(current.id.length !== current.data.length) return Promise.reject("Lengths are different on id and data")
           current.id.forEach((currentId: string, index: number) => {
-            list.push(...this.generateItems(currentId, (current.data as VSCodeTreeData[])[index], current.children))
+            list.push(...this.generateItems(currentId, (current.data as VSCodeTreeData[])[index], current.children, index))
           })
         } else if(Array.isArray(current.data)) {
           return Promise.reject("Id must be an string if data is not an array")
