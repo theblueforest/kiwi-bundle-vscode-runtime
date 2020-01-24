@@ -1,10 +1,11 @@
 import { i18nData, TreeObject, i18n, XOR, i18nContent, NameField_i18n, i18nQuery } from "dropin-recipes"
 import * as vscode from "vscode"
-import { VSCodeTreeItem } from "./Item"
+import { VSCodeTreeItemOptions, VSCodeTreeItem } from "./Item"
 
 export type VSCodeTreeData = XOR<{
-  label: NameField_i18n
-  description?: string
+  label: i18nContent
+  options?: VSCodeTreeItemOptions
+  update?: (fire: (data: VSCodeTreeData) => void) => void
 }, {
   $: { type: "handler", name: string }
 }>
@@ -20,6 +21,11 @@ export interface VSCodeTreeParams {
 }
 
 export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeItem> {
+  private _onDidChangeTreeData: vscode.EventEmitter<VSCodeTreeItem> = new vscode.EventEmitter<VSCodeTreeItem>()
+  onDidChangeTreeData: vscode.Event<VSCodeTreeItem> = this._onDidChangeTreeData.event
+
+  cache: any[] = []
+
   constructor(private params: VSCodeTreeParams) {}
 
   private extractItemChildren(children?: TreeObject<VSCodeTreeData>["children"], index?: number): VSCodeTreeRecipe {
@@ -42,24 +48,23 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
       if(typeof this.params.handlers !== "undefined" && typeof this.params.handlers[data.$.name] !== "undefined") {
         const name = data.$.name
         return this.params.handlers[name]().map((element: VSCodeTreeData) => {
-          return new VSCodeTreeItem(`${id}-${name}`, {
-            label: element.label as string,
-            description: element.description,
-          }, this.extractItemChildren(children, index))
+          const item = new VSCodeTreeItem(`${id}-${name}`, element.label as string, this.extractItemChildren(children, index), element.options)
+          if(typeof element.update !== "undefined") {
+            element.update(update => {
+              item.label = update.label as string
+              this._onDidChangeTreeData.fire(item)
+            })
+          }
+          return item
         })
       }
     } else if(typeof data.label === "object" && typeof this.params.i18n !== "undefined") {
       const element = (data.label as i18nQuery).$
-      return [
-        new VSCodeTreeItem(id, {
-          label: i18n(this.params.i18n[element.name as string] as i18nContent, element.options),
-        }, this.extractItemChildren(children, index))
-      ]
+      const label = i18n(this.params.i18n[element.name as string] as i18nContent, element.options)
+      return [ new VSCodeTreeItem(id, label, this.extractItemChildren(children, index)) ]
     }
     return [
-      new VSCodeTreeItem(id, {
-        label: i18n(data.label as i18nContent),
-      }, this.extractItemChildren(children, index))
+      new VSCodeTreeItem(id, i18n(data.label as i18nContent), this.extractItemChildren(children, index))
     ]
   }
 

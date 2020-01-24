@@ -1,14 +1,13 @@
 import * as vscode from "vscode"
 import { VSCodeTreeRecipe } from "./Provider"
 
-interface VSCodeTreeItemOptions {
-  label: string
+export interface VSCodeTreeItemOptions {
   description?: string
 }
 
 export class VSCodeTreeItem extends vscode.TreeItem {
-  constructor(public contextValue: string, options: VSCodeTreeItemOptions, private children: VSCodeTreeRecipe) {
-    super(options.label, vscode.TreeItemCollapsibleState.Collapsed)
+  constructor(public contextValue: string, label: string, private children: VSCodeTreeRecipe, options: VSCodeTreeItemOptions = {}) {
+    super(label, vscode.TreeItemCollapsibleState.Collapsed)
     this.description = options.description
   }
 
