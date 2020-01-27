@@ -1,2 +1,3 @@
+# Kiwi Bundle - Visual Studio Code runtime
 
-# Kiwi Bundle - Visual Studio Code Runtime
+See usage : https://github.com/theblueforest/kiwi-bundle-vscode
