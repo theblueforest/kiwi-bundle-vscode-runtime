@@ -2,10 +2,16 @@ import { i18nData, TreeObject, i18n, XOR, i18nContent, NameField_i18n, i18nQuery
 import * as vscode from "vscode"
 import { VSCodeTreeItemOptions, VSCodeTreeItem } from "./Item"
 
+interface VSCodeTreeDataChanges {
+  insert?: (data: VSCodeTreeData) => void
+  update: (data: VSCodeTreeData) => void
+  delete?: (data: VSCodeTreeData) => void
+}
+
 export type VSCodeTreeData = XOR<{
   label: i18nContent
   options?: VSCodeTreeItemOptions
-  update?: (fire: (data: VSCodeTreeData) => void) => void
+  changes?: (fire: VSCodeTreeDataChanges) => void
 }, {
   $: { type: "handler", name: string }
 }>
@@ -49,10 +55,13 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
         const name = data.$.name
         return this.params.handlers[name]().map((element: VSCodeTreeData) => {
           const item = new VSCodeTreeItem(`${id}-${name}`, element.label as string, this.extractItemChildren(children, index), element.options)
-          if(typeof element.update !== "undefined") {
-            element.update(update => {
-              item.label = update.label as string
-              this._onDidChangeTreeData.fire(item)
+          if(typeof element.changes !== "undefined") {
+            element.changes({
+              update: updatedItem => {
+                console.log("UPDATE !")
+                item.label = updatedItem.label as string
+                this._onDidChangeTreeData.fire(item)
+              },
             })
           }
           return item
