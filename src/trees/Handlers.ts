@@ -2,7 +2,7 @@ import { VSCodeTreeData } from "./Provider"
 
 type TreeHandlers = { [name: string]: () => VSCodeTreeData[] }
 
-type Command<Context> = (context: Context) => void
+type Command<Context> = (context?: Context) => void
 
 type Commands<Context> = { [name: string]: Command<Context> }
 
@@ -11,8 +11,14 @@ export class VSCodeTreeHandlers<Context = any> {
 
   constructor(private treeHandlers: TreeHandlers, private commands?: Commands<Context>) {}
 
-  run(handlerName: string): VSCodeTreeData[] {
-    return this.treeHandlers[handlerName]()
+  runTreeHandler(name: string): VSCodeTreeData[] {
+    return this.treeHandlers[name]()
+  }
+
+  runCommand(name: string, context?: Context): any {
+    if(typeof this.commands !== "undefined" && typeof this.commands[name] !== "undefined") {
+      return this.commands[name](context)
+    }
   }
 
   handleCommands(register: (name: string, command: Command<Context>) => void) {
