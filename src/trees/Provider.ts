@@ -1,6 +1,7 @@
-import { i18nData, TreeObject, i18n, XOR, i18nContent, i18nQuery, ModelRecipe } from "dropin-recipes"
+import { i18nData, TreeObject, i18n, XOR, i18nContent, i18nQuery } from "dropin-recipes"
 import * as vscode from "vscode"
 import { VSCodeTreeItemOptions, VSCodeTreeItem } from "./Item"
+import { VSCodeTreeHandlers } from "./Handlers"
 
 export type VSCodeTreeData = XOR<{
   label: i18nContent
@@ -10,8 +11,6 @@ export type VSCodeTreeData = XOR<{
 }>
 
 export type VSCodeTreeRecipe = TreeObject<VSCodeTreeData>[]
-
-export type VSCodeTreeHandlers = { [functionName: string]: any }
 
 export interface VSCodeTreeParams {
   recipe: VSCodeTreeRecipe
@@ -51,9 +50,9 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
 
   private generateItems(id: string, data: VSCodeTreeData, children?: TreeObject<VSCodeTreeData>["children"], index?: number): VSCodeTreeItem[] {
     if(typeof data.$ !== "undefined") {
-      if(typeof this.params.handlers !== "undefined" && typeof this.params.handlers[data.$.name] !== "undefined") {
+      if(typeof this.params.handlers !== "undefined") {
         const name = data.$.name
-        return this.params.handlers[name]().map((element: VSCodeTreeData) => {
+        return this.params.handlers.run(name).map(element => {
           return new VSCodeTreeItem([ id, name ], element.label as string, this.extractItemChildren(children, index), element.options)
         })
       }
