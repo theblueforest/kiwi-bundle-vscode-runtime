@@ -1,11 +1,10 @@
-import { i18nData, TreeObject, i18n, XOR, i18nContent, NameField_i18n, i18nQuery } from "dropin-recipes"
+import { i18nData, TreeObject, i18n, XOR, i18nContent, i18nQuery, ModelRecipe } from "dropin-recipes"
 import * as vscode from "vscode"
 import { VSCodeTreeItemOptions, VSCodeTreeItem } from "./Item"
 
 export type VSCodeTreeData = XOR<{
   label: i18nContent
   options?: VSCodeTreeItemOptions
-  changes?: (fire: (data?: VSCodeTreeData) => void) => void
 }, {
   $: { type: "handler", name: string }
 }>
@@ -18,15 +17,22 @@ export interface VSCodeTreeParams {
   recipe: VSCodeTreeRecipe
   handlers?: VSCodeTreeHandlers
   i18n?: i18nData
+  init?: (provider: VSCodeTreeProvider) => void
+}
+
+export interface VSCodeTreeContext {
+  update: (data?: VSCodeTreeData) => void
 }
 
 export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<VSCodeTreeItem> = new vscode.EventEmitter<VSCodeTreeItem>()
   onDidChangeTreeData: vscode.Event<VSCodeTreeItem> = this._onDidChangeTreeData.event
 
-  cache: any[] = []
-
-  constructor(private params: VSCodeTreeParams) {}
+  constructor(private params: VSCodeTreeParams) {
+    if(typeof params.init !== "undefined") {
+      params.init(this)
+    }
+  }
 
   private extractItemChildren(children?: TreeObject<VSCodeTreeData>["children"], index?: number): VSCodeTreeRecipe {
     if(!Array.isArray(children)) {
@@ -48,18 +54,15 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
       if(typeof this.params.handlers !== "undefined" && typeof this.params.handlers[data.$.name] !== "undefined") {
         const name = data.$.name
         return this.params.handlers[name]().map((element: VSCodeTreeData) => {
-          const item = new VSCodeTreeItem(`${id}-${name}`, element.label as string, this.extractItemChildren(children, index), element.options)
-          return item
+          return new VSCodeTreeItem([ id, name ], element.label as string, this.extractItemChildren(children, index), element.options)
         })
       }
     } else if(typeof data.label === "object" && typeof this.params.i18n !== "undefined") {
       const element = (data.label as i18nQuery).$
       const label = i18n(this.params.i18n[element.name as string] as i18nContent, element.options)
-      return [ new VSCodeTreeItem(id, label, this.extractItemChildren(children, index)) ]
+      return [ new VSCodeTreeItem([ id ], label, this.extractItemChildren(children, index)) ]
     }
-    return [
-      new VSCodeTreeItem(id, i18n(data.label as i18nContent), this.extractItemChildren(children, index))
-    ]
+    return [  new VSCodeTreeItem([ id ], i18n(data.label as i18nContent), this.extractItemChildren(children, index)) ]
   }
 
   private getItems(recipe: VSCodeTreeRecipe): Promise<VSCodeTreeItem[]> {
@@ -93,6 +96,10 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
       return this.getItems(element.getChildren())
     }
     return this.getItems(this.params.recipe)
+  }
+
+  refresh() {
+    this._onDidChangeTreeData.fire()
   }
 
 }

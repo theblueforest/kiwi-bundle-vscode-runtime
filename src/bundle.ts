@@ -2,11 +2,12 @@ import { i18nSettings } from "dropin-recipes"
 import * as vscode from "vscode"
 import { VSCodeTreeParams, VSCodeTreeProvider } from "./trees/Provider"
 
-export interface KiwiBundleVSCodeParams {
+export interface KiwiBundleVSCodeParams<Context> {
+  context?: Context
   trees?: { [treeId: string]: VSCodeTreeParams }
 }
 
-export const KiwiBundleVSCode = (params: KiwiBundleVSCodeParams) => {
+export const KiwiBundleVSCode = <Context = any>(params: KiwiBundleVSCodeParams<Context>) => {
   // Locale
   i18nSettings.setCurrentLanguageFromString(vscode.env.language)
 

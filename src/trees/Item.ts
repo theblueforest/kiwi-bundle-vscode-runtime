@@ -6,8 +6,9 @@ export interface VSCodeTreeItemOptions {
 }
 
 export class VSCodeTreeItem extends vscode.TreeItem {
-  constructor(public contextValue: string, label: string, private children: VSCodeTreeRecipe, options: VSCodeTreeItemOptions = {}) {
+  constructor(id: string[], label: string, private children: VSCodeTreeRecipe, options: VSCodeTreeItemOptions = {}) {
     super(label, vscode.TreeItemCollapsibleState.Collapsed)
+    this.contextValue = id.join("-")
     this.description = options.description
   }
 
