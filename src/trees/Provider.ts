@@ -16,7 +16,6 @@ export interface VSCodeTreeParams {
   recipe: VSCodeTreeRecipe
   handlers?: VSCodeTreeHandlers
   i18n?: i18nData
-  init?: (provider: VSCodeTreeProvider) => void
 }
 
 export interface VSCodeTreeContext {
@@ -35,11 +34,7 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
           command(context)
         })
       })
-    }
-
-    // Init
-    if(typeof params.init !== "undefined") {
-      params.init(this)
+      params.handlers.init(this)
     }
   }
 

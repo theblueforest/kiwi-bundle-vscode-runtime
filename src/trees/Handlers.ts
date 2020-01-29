@@ -1,5 +1,5 @@
 import { KeysObject } from "dropin-recipes"
-import { VSCodeTreeData } from "./Provider"
+import { VSCodeTreeData, VSCodeTreeProvider } from "./Provider"
 
 type ItemHandler<Context> = (context: Context) => VSCodeTreeData[]
 
@@ -12,6 +12,7 @@ type CommandsHandlers<Context, Commands> = KeysObject<CommandHandler<Context>, C
 interface Params<Context, Items, Commands> {
   items?: ItemsHandlers<Context, Items>
   commands?: CommandsHandlers<Context, Commands>
+  init?: (provider: VSCodeTreeProvider) => void
 }
 
 export interface VSCodeTreeHandlers<Context = {}, Items = {}, Commands = {}> {
@@ -21,6 +22,7 @@ export interface VSCodeTreeHandlers<Context = {}, Items = {}, Commands = {}> {
   runCommandHandler(name: keyof Commands): void
   registerCommands(register: (name: string, command: CommandHandler<Context>) => void): void
   getContext(): Context
+  init(provider: VSCodeTreeProvider): void
 }
 
 export const VSCodeTreeHandlers = <Context extends KeysObject<any> = {}>(context: Context = {} as Context) => {
@@ -44,6 +46,11 @@ export const VSCodeTreeHandlers = <Context extends KeysObject<any> = {}>(context
         })
       },
       getContext: () => context,
+      init: (provider: VSCodeTreeProvider) => {
+        if(typeof params.init !== "undefined") {
+          params.init(provider)
+        }
+      },
     }) as VSCodeTreeHandlers<Context, Items, Commands>
   }
 }
