@@ -52,7 +52,7 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
     if(typeof data.$ !== "undefined") {
       if(typeof this.params.handlers !== "undefined") {
         const name = data.$.name
-        return this.params.handlers.runTreeHandler(name).map(element => {
+        return this.params.handlers.runItemHandlerFromString(name).map(element => {
           return new VSCodeTreeItem([ id, name ], element.label as string, this.extractItemChildren(children, index), element.options)
         })
       }
@@ -92,9 +92,13 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
 
   getChildren(element?: VSCodeTreeItem): vscode.ProviderResult<VSCodeTreeItem[]> {
     if(typeof element !== "undefined") {
-      return this.getItems(element.getChildren())
+      const children = element.getChildren()
+      if(typeof children !== "undefined") {
+        return this.getItems(children)
+      }
+    } else {
+      return this.getItems(this.params.recipe)
     }
-    return this.getItems(this.params.recipe)
   }
 
   refresh() {

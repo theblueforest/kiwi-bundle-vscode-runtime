@@ -1,7 +1,6 @@
 import { i18nSettings } from "dropin-recipes"
 import * as vscode from "vscode"
 import { VSCodeTreeParams, VSCodeTreeProvider } from "./trees/Provider"
-import { VSCodeTreeHandlers } from "./trees/Handlers"
 
 export interface KiwiBundleVSCodeParams {
   trees?: { [treeId: string]: VSCodeTreeParams }
@@ -16,7 +15,7 @@ export const KiwiBundleVSCode = (params: KiwiBundleVSCodeParams) => {
     const trees = params.trees
     Object.keys(trees).forEach(treeId => {
       if(typeof trees[treeId].handlers !== "undefined") {
-        trees[treeId].handlers?.handleCommands((name, command) => {
+        trees[treeId].handlers?.registerCommands((name, command) => {
           vscode.commands.registerCommand(`tree.${treeId}.${name}`, context => {
             command(context)
           })

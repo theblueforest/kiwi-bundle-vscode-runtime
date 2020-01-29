@@ -1,32 +1,41 @@
+import { KeysObject } from "dropin-recipes"
 import { VSCodeTreeData } from "./Provider"
 
-type TreeHandlers = { [name: string]: () => VSCodeTreeData[] }
+type ItemsHandlers<Context, Items> = KeysObject<(context: Context) => VSCodeTreeData[], Items>
 
-type Command<Context> = (context?: Context) => void
+type CommandsHandlers<Context, Commands> = KeysObject<(context: Context) => void, Commands>
 
-type Commands<Context> = { [name: string]: Command<Context> }
+interface Params<Context, Items, Commands> {
+  items?: ItemsHandlers<Context, Items>
+  commands?: CommandsHandlers<Context, Commands>
+}
 
-export class VSCodeTreeHandlers<Context = any> {
-  private context: Context = {} as any
+export interface VSCodeTreeHandlers<Context = {}, Items = {}, Commands = {}> {
+  runItemHandler(name: keyof Items): VSCodeTreeData[]
+  runItemHandlerFromString(name: string): VSCodeTreeData[]
+  runCommandHandler(name: keyof Commands): void
+  registerCommands(register: (name: string, command: (context: Context) => void) => void): void
+}
 
-  constructor(private treeHandlers: TreeHandlers, private commands?: Commands<Context>) {}
-
-  runTreeHandler(name: string): VSCodeTreeData[] {
-    return this.treeHandlers[name]()
+export const VSCodeTreeHandlers = <Context extends KeysObject<any> = {}>(context: Context = {} as Context) => {
+  return <Items extends ItemsHandlers<Context, Items>, Commands extends CommandsHandlers<Context, Commands>>(params: Params<Context, Items, Commands>) => {
+    const items = params.items || {} as Items
+    const commands = params.commands || {} as Commands
+    return ({
+      runItemHandler: name => items[name](context),
+      runItemHandlerFromString: name => {
+        const output = items[name as keyof Items]
+        if(typeof output !== "undefined") {
+          return output(context)
+        }
+        return []
+      },
+      runCommandHandler: name => commands[name](context),
+      registerCommands: register => {
+        Object.keys(commands).forEach(commandName => {
+          register(commandName, commands[commandName as keyof Commands])
+        })
+      },
+    }) as VSCodeTreeHandlers<Context, Items, Commands>
   }
-
-  runCommand(name: string, context?: Context): any {
-    if(typeof this.commands !== "undefined" && typeof this.commands[name] !== "undefined") {
-      return this.commands[name](context)
-    }
-  }
-
-  handleCommands(register: (name: string, command: Command<Context>) => void) {
-    if(typeof this.commands !== "undefined") {
-      Object.keys(this.commands).forEach(commandName => {
-        register(commandName, (this.commands as Commands<Context>)[commandName])
-      })
-    }
-  }
-
 }
