@@ -14,14 +14,7 @@ export const KiwiBundleVSCode = (params: KiwiBundleVSCodeParams) => {
   if(typeof params.trees !== "undefined") {
     const trees = params.trees
     Object.keys(trees).forEach(treeId => {
-      if(typeof trees[treeId].handlers !== "undefined") {
-        trees[treeId].handlers?.registerCommands((name, command) => {
-          vscode.commands.registerCommand(`tree.${treeId}.${name}`, context => {
-            command(context)
-          })
-        })
-      }
-      vscode.window.registerTreeDataProvider(treeId, new VSCodeTreeProvider(trees[treeId]))
+      vscode.window.registerTreeDataProvider(treeId, new VSCodeTreeProvider(treeId, trees[treeId]))
     })
   }
 }

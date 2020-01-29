@@ -1,9 +1,13 @@
 import { KeysObject } from "dropin-recipes"
 import { VSCodeTreeData } from "./Provider"
 
-type ItemsHandlers<Context, Items> = KeysObject<(context: Context) => VSCodeTreeData[], Items>
+type ItemHandler<Context> = (context: Context) => VSCodeTreeData[]
 
-type CommandsHandlers<Context, Commands> = KeysObject<(context: Context) => void, Commands>
+type CommandHandler<Context> = (context: Context) => void
+
+type ItemsHandlers<Context, Items> = KeysObject<ItemHandler<Context>, Items>
+
+type CommandsHandlers<Context, Commands> = KeysObject<CommandHandler<Context>, Commands>
 
 interface Params<Context, Items, Commands> {
   items?: ItemsHandlers<Context, Items>
@@ -13,8 +17,10 @@ interface Params<Context, Items, Commands> {
 export interface VSCodeTreeHandlers<Context = {}, Items = {}, Commands = {}> {
   runItemHandler(name: keyof Items): VSCodeTreeData[]
   runItemHandlerFromString(name: string): VSCodeTreeData[]
+  loadAllItems(): void
   runCommandHandler(name: keyof Commands): void
-  registerCommands(register: (name: string, command: (context: Context) => void) => void): void
+  registerCommands(register: (name: string, command: CommandHandler<Context>) => void): void
+  getContext(): Context
 }
 
 export const VSCodeTreeHandlers = <Context extends KeysObject<any> = {}>(context: Context = {} as Context) => {
@@ -30,12 +36,14 @@ export const VSCodeTreeHandlers = <Context extends KeysObject<any> = {}>(context
         }
         return []
       },
+      loadAllItems: () => Object.values(items).forEach(item => (item as ItemHandler<Context>)(context)),
       runCommandHandler: name => commands[name](context),
       registerCommands: register => {
         Object.keys(commands).forEach(commandName => {
           register(commandName, commands[commandName as keyof Commands])
         })
       },
+      getContext: () => context,
     }) as VSCodeTreeHandlers<Context, Items, Commands>
   }
 }

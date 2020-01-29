@@ -27,7 +27,17 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
   private _onDidChangeTreeData: vscode.EventEmitter<VSCodeTreeItem> = new vscode.EventEmitter<VSCodeTreeItem>()
   onDidChangeTreeData: vscode.Event<VSCodeTreeItem> = this._onDidChangeTreeData.event
 
-  constructor(private params: VSCodeTreeParams) {
+  constructor(public id: string, private params: VSCodeTreeParams) {
+    // Handlers
+    if(typeof params.handlers !== "undefined") {
+      params.handlers.registerCommands((name, command) => {
+        vscode.commands.registerCommand(`tree.${id}.${name}`, context => {
+          command(context)
+        })
+      })
+    }
+
+    // Init
     if(typeof params.init !== "undefined") {
       params.init(this)
     }
