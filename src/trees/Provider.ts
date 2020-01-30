@@ -5,12 +5,14 @@ import { VSCodeTreeHandlers } from "./Handlers"
 
 export type VSCodeTreeData = XOR<{
   label: i18nContent
+  path?: string
   options?: VSCodeTreeItemOptions
+  children?: VSCodeTreeData
 }, {
   $: { type: "handler", name: string }
 }>
 
-export type VSCodeTreeRecipe = TreeObject<VSCodeTreeData>[]
+export type VSCodeTreeRecipe = TreeObject<VSCodeTreeData> | TreeObject<VSCodeTreeData>[]
 
 export interface VSCodeTreeParams {
   recipe: VSCodeTreeRecipe
@@ -30,15 +32,16 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
     // Handlers
     if(typeof params.handlers !== "undefined") {
       params.handlers.registerCommands((name, command) => {
-        vscode.commands.registerCommand(`tree.${id}.${name}`, context => {
-          command(context)
-        })
+        vscode.commands.registerCommand(`tree.${id}.${name}`, command)
       })
       params.handlers.init(this)
     }
   }
 
-  private extractItemChildren(children?: TreeObject<VSCodeTreeData>["children"], index?: number): VSCodeTreeRecipe {
+  private extractChildrenItems<Children extends TreeObject<VSCodeTreeData>["children"]>(children?: Children, itemChildren?: Children, index?: number): TreeObject<VSCodeTreeData>[] {
+    if(typeof children === "undefined") {
+      children = itemChildren
+    }
     if(!Array.isArray(children)) {
       const list: VSCodeTreeRecipe = []
       if(typeof index !== "undefined") {
@@ -47,63 +50,66 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
           data: (children?.data as VSCodeTreeData[])[index],
           children: children?.children,
         })
+      } else if(typeof children !== "undefined") {
+        list.push(children as TreeObject<VSCodeTreeData>)
+        console.log(children.id)
       }
       return list
     }
-    return children as VSCodeTreeRecipe
+    return children
   }
 
-  private generateItems(id: string, data: VSCodeTreeData, children?: TreeObject<VSCodeTreeData>["children"], index?: number): VSCodeTreeItem[] {
-    if(typeof data.$ !== "undefined") {
+  private convertDataToItem(path: string[], id: string, itemData: VSCodeTreeData, children?: TreeObject<VSCodeTreeData>["children"], index?: number): VSCodeTreeItem[] {
+    if(typeof itemData.$ !== "undefined") { // Looking for handlers
       if(typeof this.params.handlers !== "undefined") {
-        const name = data.$.name
-        return this.params.handlers.runItemHandlerFromString(name).map(element => {
-          return new VSCodeTreeItem([ id, name ], element.label as string, this.extractItemChildren(children, index), element.options)
+        return this.params.handlers.runItemHandler(itemData.$.name).map(childData => { // For each handler result
+          if(typeof childData.path !== "undefined") id = childData.path // Set path as id for handler items
+          return new VSCodeTreeItem([ ...path, id ], childData.label as string, this.extractChildrenItems(children, childData.children, index), childData.options)
         })
       }
-    } else if(typeof data.label === "object" && typeof this.params.i18n !== "undefined") {
-      const element = (data.label as i18nQuery).$
-      const label = i18n(this.params.i18n[element.name as string] as i18nContent, element.options)
-      return [ new VSCodeTreeItem([ id ], label, this.extractItemChildren(children, index)) ]
+    } else if(typeof itemData.label === "object" && typeof this.params.i18n !== "undefined") {
+      const i18nLabel = (itemData.label as i18nQuery).$
+      const label = i18n(this.params.i18n[i18nLabel.name as string] as i18nContent, i18nLabel.options)
+      return [
+        new VSCodeTreeItem([ ...path, id ], label, this.extractChildrenItems(children, itemData.children, index), itemData.options),
+      ]
     }
-    return [  new VSCodeTreeItem([ id ], i18n(data.label as i18nContent), this.extractItemChildren(children, index)) ]
+    return [
+      new VSCodeTreeItem([ ...path, id ], i18n(itemData.label as i18nContent), this.extractChildrenItems(children, itemData.children, index), itemData.options),
+    ]
   }
 
-  private getItems(recipe: VSCodeTreeRecipe): Promise<VSCodeTreeItem[]> {
-    if(!Array.isArray(recipe)) return Promise.reject("Tree must be an array")
-    return recipe.reduce<Promise<VSCodeTreeItem[]>>((promise, current) => {
-      if(typeof current.id === "undefined") return Promise.reject("Id is missing")
-      if(typeof current.data === "undefined") return Promise.reject("Data is missing")
-      return promise.then(list => {
-        if(Array.isArray(current.id)) {
-          if(!Array.isArray(current.data)) return Promise.reject("Id must be a string or data an array")
-          if(current.id.length !== current.data.length) return Promise.reject("Lengths are different on id and data")
-          current.id.forEach((currentId: string, index: number) => {
-            list.push(...this.generateItems(currentId, (current.data as VSCodeTreeData[])[index], current.children, index))
+  private convertRecipeToItems(recipe: VSCodeTreeRecipe, itemPath: string[]): Promise<VSCodeTreeItem[]> {
+    if(!Array.isArray(recipe)) recipe = [ recipe ]
+    return recipe.reduce<Promise<VSCodeTreeItem[]>>((promise, recipeItem) => {
+      if(typeof recipeItem.id === "undefined") return Promise.reject("Id is missing")
+      if(typeof recipeItem.data === "undefined") return Promise.reject("Data is missing")
+      return promise.then(items => {
+        if(Array.isArray(recipeItem.id)) {
+          if(!Array.isArray(recipeItem.data)) return Promise.reject("Id must be a string or data an array")
+          if(recipeItem.id.length !== recipeItem.data.length) return Promise.reject("Lengths are different on id and data")
+          recipeItem.id.forEach((id: string, index: number) => {
+            items.push(...this.convertDataToItem(itemPath, id, (recipeItem.data as VSCodeTreeData[])[index], recipeItem.children, index))
           })
-        } else if(Array.isArray(current.data)) {
+        } else if(Array.isArray(recipeItem.data)) {
           return Promise.reject("Id must be an string if data is not an array")
         } else {
-          list.push(...this.generateItems(current.id, current.data, current.children))
+          items.push(...this.convertDataToItem(itemPath, recipeItem.id, recipeItem.data, recipeItem.children))
         }
-        return list
+        return items
       })
     }, Promise.resolve([]))
   }
 
-  getTreeItem(element: VSCodeTreeItem): VSCodeTreeItem | Thenable<VSCodeTreeItem> {
-    return element
+  getTreeItem(item: VSCodeTreeItem): VSCodeTreeItem | Thenable<VSCodeTreeItem> {
+    return item
   }
 
-  getChildren(element?: VSCodeTreeItem): vscode.ProviderResult<VSCodeTreeItem[]> {
-    if(typeof element !== "undefined") {
-      const children = element.getChildren()
-      if(typeof children !== "undefined") {
-        return this.getItems(children)
-      }
-    } else {
-      return this.getItems(this.params.recipe)
+  getChildren(item?: VSCodeTreeItem): vscode.ProviderResult<VSCodeTreeItem[]> {
+    if(typeof item !== "undefined") {
+      return this.convertRecipeToItems(item.getChildren(), item.path)
     }
+    return this.convertRecipeToItems(this.params.recipe, [])
   }
 
   refresh() {
