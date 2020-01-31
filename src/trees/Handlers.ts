@@ -3,7 +3,7 @@ import { VSCodeTreeData, VSCodeTreeProvider } from "./Provider"
 
 type ItemHandler<Context> = (context: Context) => VSCodeTreeData[]
 
-type CommandHandler<Context> = (context: Context, ...params: any[]) => void
+type CommandHandler<Context> = (context: Context, path?: string[]) => void
 
 type CommandsHandlers<Context, Commands> = KeysObject<CommandHandler<Context>, Commands>
 
@@ -38,7 +38,7 @@ export const VSCodeTreeHandlers = <Context extends KeysObject<any> = {}>(context
       runCommandHandler: name => commands[name](context),
       registerCommands: register => {
         Object.keys(commands).forEach(commandName => {
-          register(commandName, (...params) => commands[commandName as keyof Commands](context, ...params))
+          register(commandName, itemPath => commands[commandName as keyof Commands](context, itemPath))
         })
       },
       getContext: () => context,

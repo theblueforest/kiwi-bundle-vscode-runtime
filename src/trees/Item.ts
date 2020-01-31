@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
-import { VSCodeTreeData } from "./Provider"
 import { TreeObject } from "dropin-recipes"
+import { VSCodeTreeData } from "./Provider"
 
 export interface VSCodeTreeItemOptions {
   description?: string
@@ -14,7 +14,7 @@ export class VSCodeTreeItem extends vscode.TreeItem {
     this.contextValue = path.join(".")
     this.description = options.description
     if(typeof options.onClick !== "undefined") {
-      this.command = { title: `${this.collapsibleState}-onClick`, command: options.onClick, arguments: [ this ] }
+      this.command = { title: `${this.contextValue}.onClick`, command: options.onClick, arguments: [ path ] }
     } else if(children.length !== 0) {
       this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed
     }
