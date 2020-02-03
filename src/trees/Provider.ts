@@ -29,7 +29,6 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
   onDidChangeTreeData: vscode.Event<VSCodeTreeItem> = this._onDidChangeTreeData.event
 
   constructor(public id: string, private params: VSCodeTreeParams) {
-    // Handlers
     if(typeof params.handlers !== "undefined") {
       params.handlers.registerCommands((name, command) => {
         vscode.commands.registerCommand(`tree.${id}.${name}`, command)
@@ -71,7 +70,7 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
   private convertDataToItem(previousPath: string[], itemId: string, itemData: VSCodeTreeData, itemChildren?: TreeObject<VSCodeTreeData>["children"], itemIndex?: number): VSCodeTreeItem[] {
     if(typeof itemData.$ !== "undefined" && typeof this.params.handlers !== "undefined") { // Looking for handlers
       return this.params.handlers.runItemHandler(itemData.$.name).map(childData => { // For each handler result
-        // console.log("\n1=====>")
+        console.log("\n1=====>")
         const itemDataPath = this.getItemDataPath(previousPath, itemId, childData.path)
         const childrenItems = this.extractChildrenItems(itemChildren, childData.children, itemIndex)
         return new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, childData.label as string, childrenItems, childData.options)
@@ -80,12 +79,12 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
     const itemDataPath = this.getItemDataPath(previousPath, itemId, itemData.path)
     const childrenItems = this.extractChildrenItems(itemChildren, itemData.children, itemIndex)
     if(typeof itemData.label === "object" && typeof this.params.i18n !== "undefined") {
-      // console.log("\n2=====>")
+      console.log("\n2=====>")
       const i18nLabel = (itemData.label as i18nQuery).$
       const label = i18n(this.params.i18n[i18nLabel.name as string] as i18nContent, i18nLabel.options)
       return [ new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, label, childrenItems, itemData.options) ]
     }
-    // console.log("\n3=====>")
+    console.log("\n3=====>")
     return [ new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, i18n(itemData.label as i18nContent), childrenItems, itemData.options) ]
   }
 

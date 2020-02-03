@@ -1,9 +1,10 @@
 import { KeysObject } from "dropin-recipes"
 import { VSCodeTreeData, VSCodeTreeProvider } from "./Provider"
+import { VSCodeTreeItem } from "./Item"
 
 type ItemHandler<Context> = (context: Context) => VSCodeTreeData[]
 
-type CommandHandler<Context> = (context: Context, path?: string[]) => void
+type CommandHandler<Context> = (context: Context, item?: VSCodeTreeItem) => void
 
 type CommandsHandlers<Context, Commands> = KeysObject<CommandHandler<Context>, Commands>
 
