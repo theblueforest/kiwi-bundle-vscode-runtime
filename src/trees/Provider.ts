@@ -101,7 +101,9 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
             items.push(...this.convertDataToItem(itemPath, id, (recipeItem.data as VSCodeTreeData[])[index], recipeItem.children, index))
           })
         } else if(Array.isArray(recipeItem.data)) {
-          return Promise.reject("Id must be an string if data is not an array")
+          recipeItem.data.forEach((childData: VSCodeTreeData) => {
+            items.push(...this.convertDataToItem(itemPath, recipeItem.id as string, childData, recipeItem.children))
+          })
         } else {
           items.push(...this.convertDataToItem(itemPath, recipeItem.id, recipeItem.data, recipeItem.children))
         }
