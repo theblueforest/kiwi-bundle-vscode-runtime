@@ -109,17 +109,24 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
         }
         return items
       })
-    }, Promise.resolve([]))
+    }, Promise.resolve([])).then(items => {
+      if(typeof this.params.handlers !== "undefined") this.params.handlers.onItems(items, this.depth)
+      return items
+    })
   }
 
   getTreeItem(item: VSCodeTreeItem): VSCodeTreeItem | Thenable<VSCodeTreeItem> {
     return item
   }
 
+  private depth: number = 0
+
   getChildren(item?: VSCodeTreeItem): vscode.ProviderResult<VSCodeTreeItem[]> {
     if(typeof item !== "undefined") {
+      this.depth++
       return this.convertRecipeToItems(item.getChildren(), item.path)
     }
+    this.depth = 0
     return this.convertRecipeToItems(this.params.recipe, [])
   }
 

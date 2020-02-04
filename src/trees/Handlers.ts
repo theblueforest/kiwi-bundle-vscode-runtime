@@ -11,6 +11,7 @@ type CommandsHandlers<Context, Commands> = KeysObject<CommandHandler<Context>, C
 interface Params<Context, Commands> {
   items?: KeysObject<ItemHandler<Context>>
   commands?: CommandsHandlers<Context, Commands>
+  onItems?: (items: VSCodeTreeItem[], depth: number) => VSCodeTreeItem[]
   init?: (provider: VSCodeTreeProvider, context: Context) => void
 }
 
@@ -20,6 +21,7 @@ export interface VSCodeTreeHandlers<Context = {}, Commands = {}> {
   runCommandHandler(name: keyof Commands): void
   registerCommands(register: (name: string, command: (...params: any[]) => void) => void): void
   getContext(): Context
+  onItems: (items: VSCodeTreeItem[], depth: number) => VSCodeTreeItem[]
   init(provider: VSCodeTreeProvider): void
 }
 
@@ -43,7 +45,8 @@ export const VSCodeTreeHandlers = <Context extends KeysObject<any> = {}>(context
         })
       },
       getContext: () => context,
-      init: (provider: VSCodeTreeProvider) => {
+      onItems: (items, depth) => typeof params.onItems !== "undefined" ? params.onItems(items, depth) : items,
+      init: provider => {
         if(typeof params.init !== "undefined") {
           params.init(provider, context)
         }
