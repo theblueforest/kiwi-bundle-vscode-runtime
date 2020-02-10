@@ -2,7 +2,7 @@ import { KeysObject } from "dropin-recipes"
 import { VSCodeTreeData, VSCodeTreeProvider } from "./Provider"
 import { VSCodeTreeItem } from "./Item"
 
-type ItemHandler<Context> = (context: Context) => VSCodeTreeData[]
+type ItemHandler<Context> = (context: Context, path?: string[]) => VSCodeTreeData[]
 
 type CommandHandler<Context> = (context: Context, item?: VSCodeTreeItem) => void
 
@@ -16,7 +16,7 @@ interface Params<Context, Commands> {
 }
 
 export interface VSCodeTreeHandlers<Context = {}, Commands = {}> {
-  runItemHandler(name: string): VSCodeTreeData[]
+  runItemHandler(name: string, path?: string[]): VSCodeTreeData[]
   loadAllItems(): void
   runCommandHandler(name: keyof Commands): void
   registerCommands(register: (name: string, command: (...params: any[]) => void) => void): void
@@ -30,10 +30,10 @@ export const VSCodeTreeHandlers = <Context extends KeysObject<any> = {}>(context
     const items = params.items || {}
     const commands = params.commands || {} as Commands
     return ({
-      runItemHandler: name => {
+      runItemHandler: (name, path) => {
         const output = items[name]
         if(typeof output !== "undefined") {
-          return output(context)
+          return output(context, path)
         }
         return []
       },

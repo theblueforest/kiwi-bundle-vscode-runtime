@@ -49,7 +49,7 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
     return { contextValue: childPath, path: [ ...previousPath, id, childPath ] }
   }
 
-  private extractChildrenItems(childrenRecipe?: VSCodeTreeRecipe, childrenItem?: VSCodeTreeData, childrenIndex?: number): TreeObject<VSCodeTreeData>[] {
+  private extractChildrenItems(path: string[], childrenRecipe?: VSCodeTreeRecipe, childrenItem?: VSCodeTreeData, childrenIndex?: number): TreeObject<VSCodeTreeData>[] {
     if(Array.isArray(childrenRecipe)) return childrenRecipe
     if(typeof childrenRecipe !== "undefined") {
       let recipe = childrenRecipe as TreeObject<VSCodeTreeData>
@@ -61,30 +61,35 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
       return [ recipe ]
     }
     if(typeof childrenItem !== "undefined") {
-      const id = Array.isArray(childrenItem.path) ? childrenItem.path[0] : childrenItem.path as string
-      return [ { id, data: childrenItem } ]
+      if(typeof childrenItem.$ !== "undefined") {
+        if(typeof this.params.handlers !== "undefined") {
+          return this.params.handlers.runItemHandler(childrenItem.$.name, path).map(data => ({ id: path[path.length - 1], data }))
+        }
+      } else {
+        return [ { id: Array.isArray(childrenItem.path) ? childrenItem.path[0] : childrenItem.path as string, data: childrenItem } ]
+      }
     }
     return []
   }
 
   private convertDataToItem(previousPath: string[], itemId: string, itemData: VSCodeTreeData, itemChildren?: TreeObject<VSCodeTreeData>["children"], itemIndex?: number): VSCodeTreeItem[] {
-    if(typeof itemData.$ !== "undefined" && typeof this.params.handlers !== "undefined") { // Looking for handlers
-      return this.params.handlers.runItemHandler(itemData.$.name).map(childData => { // For each handler result
-        console.log("\n1=====>")
-        const itemDataPath = this.getItemDataPath(previousPath, itemId, childData.path)
-        const childrenItems = this.extractChildrenItems(itemChildren, childData.children, itemIndex)
-        return new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, childData.label as string, childrenItems, childData.options)
+    if(typeof itemData.$ !== "undefined" && typeof this.params.handlers !== "undefined") {
+      return this.params.handlers.runItemHandler(itemData.$.name, [ ...previousPath, itemId ]).map(handlerData => {
+        // console.log("\n1=====>")
+        const itemDataPath = this.getItemDataPath(previousPath, itemId, handlerData.path)
+        const childrenItems = this.extractChildrenItems(itemDataPath.path, itemChildren, handlerData.children, itemIndex)
+        return new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, handlerData.label as string, childrenItems, handlerData.options)
       })
     }
     const itemDataPath = this.getItemDataPath(previousPath, itemId, itemData.path)
-    const childrenItems = this.extractChildrenItems(itemChildren, itemData.children, itemIndex)
+    const childrenItems = this.extractChildrenItems(itemDataPath.path, itemChildren, itemData.children, itemIndex)
     if(typeof itemData.label === "object" && typeof this.params.i18n !== "undefined") {
-      console.log("\n2=====>")
+      // console.log("\n2=====>")
       const i18nLabel = (itemData.label as i18nQuery).$
       const label = i18n(this.params.i18n[i18nLabel.name as string] as i18nContent, i18nLabel.options)
       return [ new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, label, childrenItems, itemData.options) ]
     }
-    console.log("\n3=====>")
+    // console.log("\n3=====>")
     return [ new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, i18n(itemData.label as i18nContent), childrenItems, itemData.options) ]
   }
 
