@@ -1,8 +1,8 @@
 {
-  "name": "kiwi-bundle-vscode-runtime",
-  "version": "1.0.0",
+  "name": "kiwi-runtime-vscode",
+  "version": "1.1.0",
   "author": "Nazim Lachter <nazim@blueforest.cc>",
-  "repository": "git@github.com:theblueforest/kiwi-bundle-vscode-runtime.git",
+  "repository": "git@github.com:theblueforest/kiwi-runtime-vscode.git",
   "license": "Apache-2.0",
   "main": "./lib/index.js",
   "scripts": {
@@ -11,10 +11,10 @@
     "build": "kiwi build"
   },
   "dependencies": {
-    "dropin-recipes": "^1.7.3"
+    "dropin-recipes": "1.8.2"
   },
   "devDependencies": {
-    "kiwi-bundle": "3.1.0",
-    "kiwi-bundle-vscode": "1.1.0"
+    "kiwi-bundle": "3.1.3",
+    "kiwi-bundle-vscode": "1.1.1"
   }
 }
