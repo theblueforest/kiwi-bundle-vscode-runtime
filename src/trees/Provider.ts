@@ -1,11 +1,11 @@
-import { i18nData, TreeObject, i18n, XOR, i18nContent, i18nQuery, Recipe } from "dropin-recipes"
+import { i18nData, TreeObject, i18n, XOR, i18nQuery, i18nSchema } from "dropin-recipes"
 import * as vscode from "vscode"
 import { VSCodeTreeItemOptions, VSCodeTreeItem } from "./Item"
 import { VSCodeTreeHandlers } from "./Handlers"
 
 export type VSCodeTreeData = XOR<{
   path?: string|string[]
-  label: i18nContent
+  label: i18nSchema
   options?: VSCodeTreeItemOptions
   children?: VSCodeTreeData
 }, {
@@ -86,11 +86,11 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
     if(typeof itemData.label === "object" && typeof this.params.i18n !== "undefined") {
       // console.log("\n2=====>")
       const i18nLabel = (itemData.label as i18nQuery).$
-      const label = i18n(this.params.i18n[i18nLabel.name as string] as i18nContent, i18nLabel.options)
+      const label = i18n(this.params.i18n[i18nLabel.name as string] as any, i18nLabel.options)
       return [ new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, label, childrenItems, itemData.options) ]
     }
     // console.log("\n3=====>")
-    return [ new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, i18n(itemData.label as i18nContent), childrenItems, itemData.options) ]
+    return [ new VSCodeTreeItem(itemDataPath.contextValue, itemDataPath.path, i18n(itemData.label as any), childrenItems, itemData.options) ]
   }
 
   private convertRecipeToItems(recipe: VSCodeTreeRecipe, itemPath: string[]): Promise<VSCodeTreeItem[]> {
