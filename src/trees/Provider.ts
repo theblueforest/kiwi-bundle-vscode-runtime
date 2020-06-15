@@ -3,14 +3,14 @@ import * as vscode from "vscode"
 import { VSCodeTreeItemOptions, VSCodeTreeItem } from "./Item"
 import { VSCodeTreeHandlers } from "./Handlers"
 
+type VSCodeTreeDataHandler = { $: { type: "handler", name: string } }
+
 export type VSCodeTreeData = XOR<{
   path?: string|string[]
   label: i18nSchema
   options?: VSCodeTreeItemOptions
-  children?: VSCodeTreeData
-}, {
-  $: { type: "handler", name: string }
-}>
+  children?: VSCodeTreeData[]
+}, VSCodeTreeDataHandler>
 
 export type VSCodeTreeRecipe = TreeObject<VSCodeTreeData> | TreeObject<VSCodeTreeData>[]
 
@@ -49,7 +49,12 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
     return { contextValue: childPath, path: [ ...previousPath, id, childPath ] }
   }
 
-  private extractChildrenItems(path: string[], childrenRecipe?: VSCodeTreeRecipe, childrenItem?: VSCodeTreeData, childrenIndex?: number): TreeObject<VSCodeTreeData>[] {
+  private extractChildrenItems(
+    path: string[],
+    childrenRecipe?: VSCodeTreeRecipe,
+    childrenItem?: VSCodeTreeData[]|VSCodeTreeDataHandler,
+    childrenIndex?: number,
+  ): TreeObject<VSCodeTreeData>[] {
     if(Array.isArray(childrenRecipe)) return childrenRecipe
     if(typeof childrenRecipe !== "undefined") {
       let recipe = childrenRecipe as TreeObject<VSCodeTreeData>
@@ -61,12 +66,16 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
       return [ recipe ]
     }
     if(typeof childrenItem !== "undefined") {
+      if(Array.isArray(childrenItem)) {
+        return childrenItem.map(children => ({
+          id: Array.isArray(children.path) ? children.path[0] : children.path as string,
+          data: children,
+        }))
+      }
       if(typeof childrenItem.$ !== "undefined") {
         if(typeof this.params.handlers !== "undefined") {
           return this.params.handlers.runItemHandler(childrenItem.$.name, path).map(data => ({ id: path[path.length - 1], data }))
         }
-      } else {
-        return [ { id: Array.isArray(childrenItem.path) ? childrenItem.path[0] : childrenItem.path as string, data: childrenItem } ]
       }
     }
     return []
