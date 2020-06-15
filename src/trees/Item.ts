@@ -21,7 +21,7 @@ export class VSCodeTreeItem<Custom = any> extends vscode.TreeItem {
       this.command = {
         title: `${this.contextValue}.onClick`,
         command: options.onClick,
-        arguments: [ this ],
+        arguments: [ Object.assign({}, this) ],
       }
     } else if(children.length !== 0) {
       this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed
