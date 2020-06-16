@@ -3,13 +3,13 @@ import * as vscode from "vscode"
 import { VSCodeTreeItemOptions, VSCodeTreeItem } from "./Item"
 import { VSCodeTreeHandlers } from "./Handlers"
 
-type VSCodeTreeDataHandler = { $: { type: "handler", name: string } }
+export type VSCodeTreeDataHandler = { $: { type: "handler", name: string } }
 
 export type VSCodeTreeData = XOR<{
   path?: string|string[]
   label: i18nSchema
   options?: VSCodeTreeItemOptions
-  children?: VSCodeTreeData[]
+  children?: VSCodeTreeDataHandler | VSCodeTreeData[]
 }, VSCodeTreeDataHandler>
 
 export type VSCodeTreeRecipe = TreeObject<VSCodeTreeData> | TreeObject<VSCodeTreeData>[]
