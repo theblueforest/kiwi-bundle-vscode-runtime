@@ -145,7 +145,7 @@ export class VSCodeTreeProvider implements vscode.TreeDataProvider<VSCodeTreeIte
   }
 
   refresh() {
-    this._onDidChangeTreeData.fire()
+    (this._onDidChangeTreeData as any).fire()
   }
 
 }
