@@ -1,8 +1,8 @@
 dependencies:
-  dropin-recipes: 'link:../../../../../../../../../../usr/local/pnpm-global/pnpm-global/node_modules/dropin-recipes'
+  dropin-recipes: 'link:../../../../../../../../../../usr/local/pnpm-global/node_modules/dropin-recipes'
 devDependencies:
-  kiwi-bundle: 'link:../../../../../../../../../../usr/local/pnpm-global/pnpm-global/node_modules/kiwi-bundle'
-  kiwi-bundle-vscode: 'link:../../../../../../../../../../usr/local/pnpm-global/pnpm-global/node_modules/kiwi-bundle-vscode'
+  kiwi-bundle: 'link:../../../../../../../../../../usr/local/pnpm-global/node_modules/kiwi-bundle'
+  kiwi-bundle-vscode: 'link:../../../../../../../../../../usr/local/pnpm-global/node_modules/kiwi-bundle-vscode'
 lockfileVersion: 5.1
 specifiers:
   dropin-recipes: 1.8.2
