@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { TreeObject } from "dropin-recipes"
-import { VSCodeTreeData } from "./Provider"
+import { VSCodeTreeData } from "./provider"
 
 export interface VSCodeTreeItemOptions<Custom = any> {
   description?: string

@@ -1,7 +1,7 @@
 import { i18nData, TreeObject, i18n, XOR, i18nQuery, i18nSchema } from "dropin-recipes"
 import * as vscode from "vscode"
-import { VSCodeTreeItemOptions, VSCodeTreeItem } from "./Item"
-import { VSCodeTreeHandlers } from "./Handlers"
+import { VSCodeTreeItemOptions, VSCodeTreeItem } from "./item"
+import { VSCodeTreeHandlers } from "./handlers"
 
 export type VSCodeTreeDataHandler = { $: { type: "handler", name: string } }
 

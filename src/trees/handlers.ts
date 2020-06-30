@@ -1,6 +1,6 @@
 import { KeysObject } from "dropin-recipes"
-import { VSCodeTreeData, VSCodeTreeProvider } from "./Provider"
-import { VSCodeTreeItem } from "./Item"
+import { VSCodeTreeData, VSCodeTreeProvider } from "./provider"
+import { VSCodeTreeItem } from "./item"
 
 type ItemHandler<Context> = (context: Context, path?: string[]) => VSCodeTreeData[]
 

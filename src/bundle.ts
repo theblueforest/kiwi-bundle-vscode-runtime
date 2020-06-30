@@ -1,6 +1,7 @@
 import { i18nSettings } from "dropin-recipes"
 import * as vscode from "vscode"
-import { VSCodeTreeParams, VSCodeTreeProvider } from "./trees/Provider"
+import { VSCodeTreeParams, VSCodeTreeProvider } from "./trees/provider"
+import { VSCodeTaskProvider } from "./tasks/provider"
 
 export type KiwiBundleVSCodeCommand = ((...params: any[]) => void)
 
@@ -8,6 +9,7 @@ export type KiwiBundleVSCodeCommands = { [name: string]: KiwiBundleVSCodeCommand
 
 export interface KiwiBundleVSCodeParams {
   trees?: { [treeId: string]: VSCodeTreeParams }
+  tasks?: VSCodeTaskProvider[]
   commands?: KiwiBundleVSCodeCommands
 }
 
@@ -24,6 +26,7 @@ const registerCommands = (commands: KiwiBundleVSCodeCommands, name: string = "")
 }
 
 export const KiwiBundleVSCode = (params: KiwiBundleVSCodeParams) => {
+
   // Locale
   i18nSettings.setCurrentLanguageFromString(vscode.env.language)
 
@@ -39,4 +42,16 @@ export const KiwiBundleVSCode = (params: KiwiBundleVSCodeParams) => {
   if(typeof params.commands !== "undefined") {
     registerCommands(params.commands)
   }
+
+  // Tasks
+  if(typeof params.tasks !== "undefined") {
+    params.tasks.forEach(task => {
+      console.log(`Registering "${task.type}" task provider...`)
+      vscode.tasks.registerTaskProvider(task.type, {
+        provideTasks: (token?: vscode.CancellationToken) => task.provideTasks(task.type),
+        resolveTask: (task: vscode.Task, token?: vscode.CancellationToken) => task,
+      })
+    })
+  }
+
 }
